@@ -5,33 +5,20 @@ import sys
 
 golden_ratio = (1 + math.sqrt(5)) / 2
 interior_angle = math.pi/5
+bounding_rects = []
+bounding_rects.append([100 + 0 + 100j + 0j, 100 + 1400 + 100j + 3200j])
+bounding_rects.append([100 + 1400 + 100j + 2000j, 100 + 2100 + 100j + (2000 + 458) * 1j])
+
+# python .\penrose.py sun 9 sun_tiling.svg
 
 class Point:
     def __init__(self, val, color):
         self.val = val
         self.color = color
 
-# Get the linear coordinates from a complex number (Polar coordinate)
-def lin_coord(A):
-    return (A.real,A.imag)
-
-# Find the distance between two Polar coordinates
-def dist(A, B):    
-    ax, ay = lin_coord(A)
-    bx, by = lin_coord(B)
-    det = (bx-ax)**2+(by-ay)**2
-    return math.sqrt(det)
-
 # Get a vector V of magnitude size in the direction of vector P1P2
 def project(P1, P2, size):
-    v1 = lin_coord(P1)
-    v2 = lin_coord(P2)
-    dx = (v2[0]-v1[0])
-    dy = (v2[1]-v1[1])
-    magnitude = dist(P1,P2)
-    x = v1[0] + size/magnitude*dx
-    y = v1[1] + size/magnitude*dy
-    return complex(x, y)
+    return P1 + size * (P2 - P1) / abs(P2 - P1)
 
 # Given a set of triangles, divide them into sub-triangles according to P2 Penrose Tiling substitution rules
 def subdivide(triangles):
@@ -48,7 +35,7 @@ def subdivide(triangles):
             
             # The size of the edge A->P will be the distance between the longer edges of the actue triangle, 
             # or the short side of the triangle
-            sz = dist(pbisect_edge.val, qbisect_edge.val)
+            sz = abs(pbisect_edge.val - qbisect_edge.val)
             P = project(A.val, pbisect_edge.val, sz)
             # The vectors A->P and A->Q make up the long and short sides of an obtuse Robinson triangle, respectively
             # so the size from A->Q must be |A->P|/golden ratio
@@ -72,7 +59,7 @@ def subdivide(triangles):
                 bisect_edge, unmodified_edge = B, C
             
             # The size of the new edge will be the magnitude of A->X/golden_ratio
-            P = project(A.val, bisect_edge.val, dist(A.val,bisect_edge.val)/golden_ratio)
+            P = project(A.val, bisect_edge.val, abs(A.val - bisect_edge.val) / golden_ratio)
             pP = Point(P, bisect_edge.color)
             result += [(1, bisect_edge, pP, unmodified_edge), (0, A, pP, unmodified_edge)]
     return result
@@ -87,7 +74,7 @@ def init_vertex_pair(x, s1, s2):
      return A, B 
 
 # Initial triangles will be in a star configuration, x number triangles @ size size
-def initial_star(x, size):
+def initial_star(x, size, pos):
     triangles = []
     for i in range(x):
         # We will make an obtuse Robinson triangle
@@ -100,7 +87,7 @@ def initial_star(x, size):
     return triangles
 
 # Initial triangles will be in a sun configuration, x number triangles @ size size
-def initial_sun(x, size):
+def initial_sun(x, size, pos):
     triangles = []
     for i in range(x):
         # We will make an acute Robinson triangle
@@ -108,25 +95,31 @@ def initial_sun(x, size):
         A, B = init_vertex_pair(i, size, size)
         if i%2 == 0: 
             A,B = B,A
-        triangles.append([0, Point(0j,0), Point(A, 0), Point(B, 1)])
+        triangles.append([0, Point(0j + pos,0), Point(A + pos, 0), Point(B + pos, 1)])
     return triangles
 
 def draw(triangles, fname, sz):
-    dwg = svgwrite.Drawing(fname, profile='tiny', size=(sz,sz))
+    dwg = svgwrite.Drawing(fname, profile='tiny', size=(2500, 3500))
     for t in triangles:
-        color = 'cyan' if t[0] == 1 else 'rgb(255, 102, 0)'
+        color = 'rgb(64, 64, 64)' if t[0] == 1 else 'rgb(128, 128, 128)'
         coords = [p.val for p in t[1:]]
-        points = [(sz/2+p.real, sz/2+p.imag) for p in coords]
-        dwg.add(dwg.polygon(points=points, fill = color, stroke='black',
-                          stroke_width=0.5))
+        points = [(p.real, p.imag) for p in coords]
+        for rect in bounding_rects:
+            if any((rect[0].real < p.real < rect[1].real) and (rect[0].imag < p.imag < rect[1].imag) for p in coords):
+                dwg.add(dwg.polygon(points=points, fill = color, stroke='black', stroke_width=0.5))
+                break
     dwg.save()
+    print(abs(coords[0] - coords[1]))
+    print(abs(coords[0] - coords[2]))
+    print(abs(coords[1] - coords[2]))
 
 if __name__ == "__main__":
-    sz = 200
+    sz = 4250
+    pos = 550 + 1375j
     if sys.argv[1] == 'star':
-        t = initial_star(10,sz)
+        t = initial_star(10, sz, pos)
     elif sys.argv[1] == 'sun':
-        t = initial_sun(10,sz)
+        t = initial_sun(10, sz, pos)
     else:
         sys.exit(1)
     draw(t, 'none.svg', sz*2)
