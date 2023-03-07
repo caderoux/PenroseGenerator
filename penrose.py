@@ -5,9 +5,27 @@ import sys
 
 golden_ratio = (1 + math.sqrt(5)) / 2
 interior_angle = math.pi/5
+
+outset = 100 + 100j
+
+left_margin = 150 + 0j
+top_margin = 0 + 150j
+topleft_margin = left_margin + top_margin
+
 bounding_rects = []
-bounding_rects.append([100 + 0 + 100j + 0j, 100 + 1400 + 100j + 3200j])
-bounding_rects.append([100 + 1400 + 100j + 2000j, 100 + 2100 + 100j + (2000 + 458) * 1j])
+bounding_rects.append([topleft_margin + 0 + 0j - outset, topleft_margin + 1400 + 3200j + outset])
+bounding_rects.append([topleft_margin + 1400 + 2000j - outset, topleft_margin + 2100 + (2000 + 458) * 1j + outset])
+
+room_poly = [
+    topleft_margin + 0 + 0j
+    , topleft_margin + 1400 + 0j
+    , topleft_margin + 1400 + 2000j
+    , topleft_margin + 2100 + 2000j
+    , topleft_margin + 2100 + (2000 + 458) * 1j
+    , topleft_margin + 1400 + (2000 + 458) * 1j
+    , topleft_margin + 1400 + 3200j
+    , topleft_margin + 0 + 3200j
+]
 
 # python .\penrose.py sun 9 sun_tiling.svg
 
@@ -101,13 +119,19 @@ def initial_sun(x, size, pos):
 def draw(triangles, fname, sz):
     dwg = svgwrite.Drawing(fname, profile='tiny', size=(2500, 3500))
     for t in triangles:
-        color = 'rgb(64, 64, 64)' if t[0] == 1 else 'rgb(128, 128, 128)'
+        color = 'rgb(128, 128, 128)' if t[0] == 1 else 'rgb(200, 200, 200)'
         coords = [p.val for p in t[1:]]
         points = [(p.real, p.imag) for p in coords]
         for rect in bounding_rects:
             if any((rect[0].real < p.real < rect[1].real) and (rect[0].imag < p.imag < rect[1].imag) for p in coords):
                 dwg.add(dwg.polygon(points=points, fill = color, stroke='black', stroke_width=0.5))
                 break
+        room_points = [(p.real, p.imag) for p in room_poly]
+    for x in range(int(left_margin.real - outset.real), 100 + int(left_margin.real + 2100 + outset.real), 100):
+        dwg.add(dwg.line(start=(x, top_margin.imag - outset.imag), end=(x, top_margin.imag + 3200 + outset.imag), stroke='green', stroke_width=5))
+    for y in range(int(top_margin.imag - outset.imag), 100 + int(top_margin.imag + 3200 + outset.imag), 100):
+        dwg.add(dwg.line(start=(left_margin.real - outset.real, y), end=(left_margin.real + 2100 + outset.real, y), stroke='green', stroke_width=5))
+    dwg.add(dwg.polygon(points=room_points, fill = 'none', stroke='red', stroke_width=10))
     dwg.save()
     print(abs(coords[0] - coords[1]))
     print(abs(coords[0] - coords[2]))
@@ -115,7 +139,7 @@ def draw(triangles, fname, sz):
 
 if __name__ == "__main__":
     sz = 4250
-    pos = 550 + 1375j
+    pos = topleft_margin + 550 + 1375j
     if sys.argv[1] == 'star':
         t = initial_star(10, sz, pos)
     elif sys.argv[1] == 'sun':
