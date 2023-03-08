@@ -119,20 +119,46 @@ def initial_sun(x, size, pos):
 def draw(triangles, fname, sz):
     dwg = svgwrite.Drawing(fname, profile='tiny', size=(2500, 3500))
     for t in triangles:
-        color = 'rgb(128, 128, 128)' if t[0] == 1 else 'rgb(200, 200, 200)'
+        tile = 'dart' if t[0] == 1 else 'kite'
+        color = 'rgb(200, 200, 200)' if tile == 'dart' else 'white'
         coords = [p.val for p in t[1:]]
+        long = max([abs(coords[0] - coords[1]), abs(coords[1] - coords[2]), abs(coords[2] - coords[0])])
+        short = min([abs(coords[0] - coords[1]), abs(coords[1] - coords[2]), abs(coords[2] - coords[0])])
         points = [(p.real, p.imag) for p in coords]
         for rect in bounding_rects:
             if any((rect[0].real < p.real < rect[1].real) and (rect[0].imag < p.imag < rect[1].imag) for p in coords):
-                dwg.add(dwg.polygon(points=points, fill = color, stroke='black', stroke_width=0.5))
+                dwg.add(dwg.polygon(points=points, fill = color, stroke = color, stroke_width=0.5))
+                break
+        for rect in bounding_rects:
+            if any((rect[0].real < p.real < rect[1].real) and (rect[0].imag < p.imag < rect[1].imag) for p in coords):
+                if tile == 'dart':
+                    if (cmath.isclose(abs(coords[0] - coords[1]), long, abs_tol = 2.0)):
+                        dwg.add(dwg.line(start = points[0], end = points[1], stroke = 'black', stroke_width=0.5))
+                        dwg.add(dwg.line(start = points[1], end = points[2], stroke = 'black', stroke_width=0.5))
+                    elif (cmath.isclose(abs(coords[1] - coords[2]), long, abs_tol = 2.0)):
+                        dwg.add(dwg.line(start = points[1], end = points[2], stroke = 'black', stroke_width=0.5))
+                    elif (cmath.isclose(abs(coords[2] - coords[0]), long, abs_tol = 2.0)):
+                        dwg.add(dwg.line(start = points[2], end = points[0], stroke = 'black', stroke_width=0.5))
+                        dwg.add(dwg.line(start = points[1], end = points[2], stroke = 'black', stroke_width=0.5))
+                if tile == 'kite':
+                    if (cmath.isclose(abs(coords[0] - coords[1]), short, abs_tol = 2.0)):
+                        dwg.add(dwg.line(start = points[0], end = points[1], stroke = 'black', stroke_width=0.5))
+                        dwg.add(dwg.line(start = points[2], end = points[0], stroke = 'black', stroke_width=0.5))
+                    if (cmath.isclose(abs(coords[1] - coords[2]), short, abs_tol = 2.0)):
+                        dwg.add(dwg.line(start = points[1], end = points[2], stroke = 'black', stroke_width=0.5))
+                        dwg.add(dwg.line(start = points[0], end = points[1], stroke = 'black', stroke_width=0.5))
+                    if (cmath.isclose(abs(coords[2] - coords[0]), short, abs_tol = 2.0)):
+                        dwg.add(dwg.line(start = points[2], end = points[0], stroke = 'black', stroke_width=0.5))
                 break
         room_points = [(p.real, p.imag) for p in room_poly]
     for x in range(int(left_margin.real - outset.real), 100 + int(left_margin.real + 2100 + outset.real), 100):
-        dwg.add(dwg.line(start=(x, top_margin.imag - outset.imag), end=(x, top_margin.imag + 3200 + outset.imag), stroke='green', stroke_width=5))
+        dwg.add(dwg.line(start=(x, top_margin.imag - outset.imag), end=(x, top_margin.imag + 3200 + outset.imag), stroke='green', stroke_width=.25))
     for y in range(int(top_margin.imag - outset.imag), 100 + int(top_margin.imag + 3200 + outset.imag), 100):
-        dwg.add(dwg.line(start=(left_margin.real - outset.real, y), end=(left_margin.real + 2100 + outset.real, y), stroke='green', stroke_width=5))
+        dwg.add(dwg.line(start=(left_margin.real - outset.real, y), end=(left_margin.real + 2100 + outset.real, y), stroke='green', stroke_width=.25))
     dwg.add(dwg.polygon(points=room_points, fill = 'none', stroke='red', stroke_width=10))
     dwg.save()
+
+    print(tile)
     print(abs(coords[0] - coords[1]))
     print(abs(coords[0] - coords[2]))
     print(abs(coords[1] - coords[2]))
