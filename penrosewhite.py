@@ -14,19 +14,14 @@ topleft_margin = left_margin + top_margin
 
 bounding_rects = []
 bounding_rects.append([topleft_margin + 0 + 0j - outset, topleft_margin + 1400 + 3200j + outset])
-bounding_rects.append([topleft_margin + 1400 + 2000j - outset, topleft_margin + 2100 + (2000 + 458) * 1j + outset])
 
 counting_rects = []
 counting_rects.append([topleft_margin + 0 + 0j, topleft_margin + 1400 + 3200j])
-counting_rects.append([topleft_margin + 1400 + 2000j, topleft_margin + 2100 + (2000 + 458) * 1j])
 
 room_poly = [
     topleft_margin + 0 + 0j
     , topleft_margin + 1400 + 0j
-    , topleft_margin + 1400 + 2000j
-    , topleft_margin + 2100 + 2000j
-    , topleft_margin + 2100 + (2000 + 458) * 1j
-    , topleft_margin + 1400 + (2000 + 458) * 1j
+    , topleft_margin + 1400 + 3200j
     , topleft_margin + 1400 + 3200j
     , topleft_margin + 0 + 3200j
 ]
@@ -125,7 +120,7 @@ def draw(triangles, fname, sz):
     triangle_counts = {'kite' : 0, 'dart' : 0}
     for t in triangles:
         tile = 'dart' if t[0] == 1 else 'kite'
-        color = 'rgb(200, 200, 200)' if tile == 'dart' else 'white'
+        color = 'white' if tile == 'dart' else 'white'
         coords = [p.val for p in t[1:]]
         long = max([abs(coords[0] - coords[1]), abs(coords[1] - coords[2]), abs(coords[2] - coords[0])])
         short = min([abs(coords[0] - coords[1]), abs(coords[1] - coords[2]), abs(coords[2] - coords[0])])
@@ -159,12 +154,12 @@ def draw(triangles, fname, sz):
             if any((rect[0].real < p.real < rect[1].real) and (rect[0].imag < p.imag < rect[1].imag) for p in coords):
                 triangle_counts[tile] += 0.5
                 break
-        room_points = [(p.real, p.imag) for p in room_poly]
-    for x in range(int(left_margin.real - outset.real), 100 + int(left_margin.real + 2100 + outset.real), 100):
-        dwg.add(dwg.line(start=(x, top_margin.imag - outset.imag), end=(x, top_margin.imag + 3200 + outset.imag), stroke='green', stroke_width=.25))
-    for y in range(int(top_margin.imag - outset.imag), 100 + int(top_margin.imag + 3200 + outset.imag), 100):
-        dwg.add(dwg.line(start=(left_margin.real - outset.real, y), end=(left_margin.real + 2100 + outset.real, y), stroke='green', stroke_width=.25))
-    dwg.add(dwg.polygon(points=room_points, fill = 'none', stroke='red', stroke_width=10))
+        # room_points = [(p.real, p.imag) for p in room_poly]
+    # for x in range(int(left_margin.real - outset.real), 100 + int(left_margin.real + 2100 + outset.real), 100):
+    #     dwg.add(dwg.line(start=(x, top_margin.imag - outset.imag), end=(x, top_margin.imag + 3200 + outset.imag), stroke='green', stroke_width=.25))
+    # for y in range(int(top_margin.imag - outset.imag), 100 + int(top_margin.imag + 3200 + outset.imag), 100):
+    #     dwg.add(dwg.line(start=(left_margin.real - outset.real, y), end=(left_margin.real + 2100 + outset.real, y), stroke='green', stroke_width=.25))
+    # dwg.add(dwg.polygon(points=room_points, fill = 'none', stroke='red', stroke_width=10))
     dwg.save()
 
     print(tile)
